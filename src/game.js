@@ -45,14 +45,25 @@ function wakeTick(dt){const p=S.p,FS=1+.05*(form-1);wakeOf(p,p.x,p.y,p.a,J.lengt
  for(const e of S.en){if(e.dead||e.type=="tentaculo"||e.type=="kraken")continue;if(e.seg&&e.i%3)continue;if(e.seg&&e.sub)continue;wakeOf(e,e.x,e.y,e.seg?e.a:(e.a||0),e.seg?0:(e.r||e.d.radius)*.9,e.type=="boss"||e.seg?"#ff9040":null,dt);}
  const keep=o=>{if(o.wk)while(o.wk.length&&S.time-o.wk[0].t>WK.vida_s)o.wk.shift();};keep(p);for(const e of S.en)keep(e);WK.ghost=(WK.ghost||[]).filter(o=>{keep(o);return o.wk.length;});
  for(const e of S.en)if(e.dead&&e.wk&&e.wk.length&&!e.wkG){e.wkG=1;WK.ghost.push({wk:e.wk});}}
-function drawWakeOf(W_){if(!W_||W_.length<2)return;const n=W_.length;
- // rastro batido
- for(let i=1;i<n;i++){const q=W_[i],q0=W_[i-1],age=(S.time-q.t)/WK.vida_s;if(age>=1)continue;const vf=Math.min(1,q.v/16),f=(1-age);
-  const wd=(q.w*PX*.5+age*q.w*PX*1.2)*(.6+.6*vf);g.strokeStyle=q.tint&&age<.25?q.tint:"#e8f4ff";g.globalAlpha=f*f*(.1+.22*vf);g.lineWidth=Math.max(1,wd);g.beginPath();g.moveTo(wx(q0.x),wy(q0.y));g.lineTo(wx(q.x),wy(q.y));g.stroke();}
+function smoothWake(W_){const n=W_.length;let P=W_.map(q=>({x:q.x,y:q.y,v:q.v,t:q.t,w:q.w,tint:q.tint}));
+ for(let it=0;it<2;it++){const Q=P.map(o=>({...o}));for(let i=1;i<n-1;i++){Q[i].x=(P[i-1].x+2*P[i].x+P[i+1].x)/4;Q[i].y=(P[i-1].y+2*P[i].y+P[i+1].y)/4;}P=Q;}
+ // remuestreo por distancia (paso mínimo 0.6 u) y normales
+ const R=[P[0]];for(let i=1;i<n;i++){const l=R[R.length-1];if(Math.hypot(P[i].x-l.x,P[i].y-l.y)>=.6||i==n-1)R.push(P[i]);}
+ for(let i=0;i<R.length;i++){const a=R[Math.max(0,i-1)],b=R[Math.min(R.length-1,i+1)];let tx=b.x-a.x,ty=b.y-a.y;const L=Math.hypot(tx,ty)||1;R[i].nx=-ty/L;R[i].ny=tx/L;R[i].ta=Math.atan2(ty,tx);}
+ for(let i=1;i<R.length-1;i++){R[i].turn=Math.abs(angDiff(R[i-1].ta,R[i+1].ta));}return R;}
+function drawWakeOf(W_){if(!W_||W_.length<3)return;const R=smoothWake(W_),n=R.length;if(n<2)return;
+ const age=q=>Math.min(1,(S.time-q.t)/WK.vida_s),vf=q=>Math.min(1,q.v/16);
+ // rastro batido: tira rellena y afinada (dos pasadas: halo suave + núcleo)
+ for(const pass of[0,1]){for(let i=1;i<n;i++){const a=R[i-1],b=R[i],ka=age(a),kb=age(b);if(ka>=1&&kb>=1)continue;
+   const wa=(a.w*.5+ka*a.w*1.2)*(.6+.6*vf(a))*(pass?.45:1),wb=(b.w*.5+kb*b.w*1.2)*(.6+.6*vf(b))*(pass?.45:1),f=1-(ka+kb)/2;
+   g.globalAlpha=f*f*(pass?(.1+.2*vf(b)):(.06+.1*vf(b)));g.fillStyle=pass&&b.tint&&kb<.3?b.tint:"#e8f4ff";g.beginPath();
+   g.moveTo(wx(a.x+a.nx*wa),wy(a.y+a.ny*wa));g.lineTo(wx(b.x+b.nx*wb),wy(b.y+b.ny*wb));g.lineTo(wx(b.x-b.nx*wb),wy(b.y-b.ny*wb));g.lineTo(wx(a.x-a.nx*wa),wy(a.y-a.ny*wa));g.closePath();g.fill();}
+  if(WK.calidad<.75)break;}
  if(WK.calidad<.75)return;
- // brazos de Kelvin (más cortos que el rastro, se desvanecen con la edad)
- for(const sd of[-1,1]){let pp=null;for(let i=0;i<n;i++){const q=W_[i],age=S.time-q.t,k=age/(WK.vida_s*.7);if(k>=1){pp=null;continue;}const off=Math.min(age*q.v*WK.kelvin_tan,10)+q.w*.3,px=wx(q.x-Math.sin(q.a)*sd*off),py=wy(q.y+Math.cos(q.a)*sd*off);
-  if(pp){const vf=Math.min(1,q.v/16);g.strokeStyle="#e1f0ff";g.globalAlpha=(1-k)*(1-k)*(.12+.3*vf);g.lineWidth=1+2.5*vf*(1-k);g.beginPath();g.moveTo(pp[0],pp[1]);g.lineTo(px,py);g.stroke();}pp=[px,py];}}}
+ // brazos de Kelvin desde las normales del camino suavizado (se recortan en giros cerrados)
+ g.lineCap="butt";g.lineJoin="round";for(const sd of[-1,1]){let pp=null,off0=0;for(let i=0;i<n;i++){const q=R[i],ag=S.time-q.t,k=ag/(WK.vida_s*.7);if(k>=1){pp=null;continue;}
+   let off=Math.min(ag*q.v*WK.kelvin_tan,10)+q.w*.3;const cl=1-Math.min(.85,(q.turn||0)*1.4);off*=cl;off=pp?off0+(off-off0)*.5:off;off0=off;
+   const px=wx(q.x+q.nx*sd*off),py=wy(q.y+q.ny*sd*off);if(pp){g.strokeStyle="#e1f0ff";g.globalAlpha=(1-k)*(1-k)*(.1+.25*vf(q))*cl;g.lineWidth=1+2*vf(q)*(1-k);g.beginPath();g.moveTo(pp[0],pp[1]);g.lineTo(px,py);g.stroke();}pp=[px,py];}}}
 function drawWakes(){g.save();g.lineCap="round";for(const o of WK.ghost||[])drawWakeOf(o.wk);for(const e of S.en)drawWakeOf(e.wk);drawWakeOf(S.p.wk);g.restore();g.globalAlpha=1;}
 let fpsAvg=5;
 // ===== FORMAS Y ALAS AZULES (JuAn 19-10-2026). En el juego la forma sale del Arsenal; aquí se elige en la pantalla de inicio
@@ -111,7 +122,7 @@ function spawn(type,pos){const e=Object.assign({},E.comun,E[type]);const rv=!isB
 // prototype pacing: waves 1-4 from plan table; each wave sends its group 3 times (12 s apart) so a run lasts ~3-5 min; wave 5 = Leviatán.
 const GROUPS_PER_WAVE=4; const groupsFor=w=>2; // 10 oleadas: 2 grupos por oleada para ~5 min
 // ===== DIFICULTAD DEL PROTOTIPO (v2 "un poco más difícil", JuAn 19-10-2026). NO está en balance.json; pasar al plan si JuAn lo aprueba =====
-const DIFF={version:"proto-v8-estelas",enemigos_por_grupo_x:1.35,pausa_grupos_x:0.75,vida_enemigos_x:1.2,dano_enemigos_x:1.2,cadencia_enemigos_x:0.85,lancha_velocidad_x:1.2,brulote_velocidad_x:1.15,brulote_mecha_x:0.8,jefe_vida_x:1.35,jefe_dano_x:1.15,jefe_ataques_cada_x:0.8,jefe_velocidad_x:1.15,escudo_automatico:false,
+const DIFF={version:"proto-v8.1-estelas-suaves",enemigos_por_grupo_x:1.35,pausa_grupos_x:0.75,vida_enemigos_x:1.2,dano_enemigos_x:1.2,cadencia_enemigos_x:0.85,lancha_velocidad_x:1.2,brulote_velocidad_x:1.15,brulote_mecha_x:0.8,jefe_vida_x:1.35,jefe_dano_x:1.15,jefe_ataques_cada_x:0.8,jefe_velocidad_x:1.15,escudo_automatico:false,
  jefe_v3:{vida_extra_x:1.3,furia_desde:.25,furia:{andanada:{proyectiles:9,abanico_grados:60,cada_s:1.5},brasas:{circulos:12,aviso_s:.75,cada_s:4.5},carga:{cada_s:7,aviso_s:.9,velocidad:42,dura_s:.7,dano:70},invocar:{brulote:2,corsario:2,cada_s:9}},
   blindaje:{cada_s:13,dura_s:2,reduccion:.6},enfado:{tras_s:100,cadencia_x:.7}},
  // rampa por oleada (multiplica sobre lo anterior, oleada 1 = ×1): N = número de oleada
