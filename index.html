@@ -9929,9 +9929,9 @@
     ],
     "_revision": "Revisión 1: 1.0 sale en inglés y español; PT-BR, FR y DE llegan en la 1.1 (lista «lanzamiento» = primera ola completa)",
     "claves": {
-      "total": 535,
+      "total": 539,
       "de_datos": 296,
-      "de_interfaz": 239,
+      "de_interfaz": 243,
       "archivos": [
         "content/strings/en.json",
         "content/strings/es.json"
@@ -10110,6 +10110,55 @@
       "cannon.upgrade_barrels",
       "cannon.upgraded"
     ]
+  },
+  "alas_azules": {
+    "nombre": "Alas azules",
+    "nombre_en": "Energy Wings",
+    "nombre_key": "wings.name",
+    "desc_key": "wings.desc",
+    "_info": "Alas de energía azul de las formas 4 (Destructor) y 5 (Dreadnought), a juego con sus velas de energía. SOLO DEFENSA: no disparan, sin láser ni alcance; solo dañan al enemigo que choca físicamente con ellas.",
+    "formas": {
+      "4": {
+        "largo_u": 3.5,
+        "ancho_u": 1.2,
+        "dano_choque": 40
+      },
+      "5": {
+        "largo_u": 4.5,
+        "ancho_u": 1.5,
+        "dano_choque": 60
+      }
+    },
+    "enfriamiento_por_enemigo_s": 0.5,
+    "efecto": "chispas azules y un zumbido corto al chocar; el ala parpadea suave (sin destellos)",
+    "no_hacen": [
+      "disparar",
+      "láser",
+      "alcance a distancia",
+      "pulsos",
+      "daño a enemigos que no las tocan"
+    ],
+    "arsenal": {
+      "nombre": "Alas azules",
+      "niveles": 10,
+      "requiere_forma": 4,
+      "por_nivel": {
+        "dano_choque_x_mas": 0.06
+      },
+      "nivel_5": "paran las balas enemigas que les dan",
+      "nivel_10": "el choque empuja al enemigo 3 u",
+      "precio": "como las mejoras del casco (100 × 1.65^(n−1))",
+      "cuenta_para_forma": false
+    },
+    "excepcion": "única excepción a «la forma es solo aspecto» (aprobado por JuAn)",
+    "jefes": "a los jefes les hacen el 50 % (se chocan mucho por su tamaño)",
+    "arte": "arte/alas_azules.jpg",
+    "textos": [
+      "wings.name",
+      "wings.desc",
+      "wings.block",
+      "arsenal.wings"
+    ]
   }
 }
 ;window.STR_ES={
@@ -10118,7 +10167,7 @@
     "name": "Español (Latinoamérica)",
     "primary": false,
     "fallback": "en",
-    "keys": 535
+    "keys": 539
   },
   "ach.acorazado.text": "Derrota al Acorazado Espectral",
   "ach.agujero_negro.text": "Atrapa 6 enemigos en una grieta",
@@ -10159,6 +10208,7 @@
   "arsenal.tab.weapons": "Armas",
   "arsenal.upgrade": "Mejorar",
   "arsenal.view_forms": "Ver formas",
+  "arsenal.wings": "Alas azules: +{count} % daño de choque",
   "boss.acorazado.name": "Acorazado Espectral",
   "boss.enraged": "¡{boss} se enfurece! Rango {n}",
   "boss.fury_rank": "Rango de Furia {n}",
@@ -10654,7 +10704,10 @@
   "weapon.incendiarias.name": "Balas incendiarias",
   "weapon.incendiarias.vs": "escamas (Leviatán, Bastión)",
   "weapon.slot.ammo": "Munición",
-  "weapon.slot.heavy": "Arma pesada"
+  "weapon.slot.heavy": "Arma pesada",
+  "wings.block": "¡PARADA!",
+  "wings.desc": "Solo defensa: dañan a los barcos enemigos que chocan con ellas",
+  "wings.name": "Alas azules"
 }
 ;window.STR_EN={
   "_meta": {
@@ -10662,7 +10715,7 @@
     "name": "English",
     "primary": true,
     "fallback": null,
-    "keys": 535
+    "keys": 539
   },
   "ach.acorazado.text": "Defeat the Spectral Ironclad",
   "ach.agujero_negro.text": "Trap 6 enemies in one rift",
@@ -10703,6 +10756,7 @@
   "arsenal.tab.weapons": "Weapons",
   "arsenal.upgrade": "Upgrade",
   "arsenal.view_forms": "View forms",
+  "arsenal.wings": "Energy Wings: +{count}% crash damage",
   "boss.acorazado.name": "Spectral Ironclad",
   "boss.enraged": "The {boss} is enraged! Rank {n}",
   "boss.fury_rank": "Fury Rank {n}",
@@ -11198,7 +11252,10 @@
   "weapon.incendiarias.name": "Incendiary Shot",
   "weapon.incendiarias.vs": "scales (Leviathan, Bastion)",
   "weapon.slot.ammo": "Ammo",
-  "weapon.slot.heavy": "Heavy Weapon"
+  "weapon.slot.heavy": "Heavy Weapon",
+  "wings.block": "BLOCKED",
+  "wings.desc": "Defense only: damage enemy ships that crash into them",
+  "wings.name": "Energy Wings"
 }
 ;</script>
 <script>"use strict";
@@ -11220,6 +11277,18 @@ const angDiff=(a,b)=>{let d=b-a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+
 const IMPL=["polvora_negra","bala_de_alma","polvora_fina","cargadores","gatillo","capacidad","casco","velas","iman","canon_doble","regeneracion","critico","escudo_templado","velo_de_bruma"];
 const CARDS=C.lista.filter(c=>IMPL.includes(c.id));window.__CARDS=CARDS;
 let S; // state
+// ===== FORMAS Y ALAS AZULES (JuAn 19-10-2026). En el juego la forma sale del Arsenal; aquí se elige en la pantalla de inicio
+const FORMS=["corbeta","fragata","acorazado","destructor","dreadnought"],AL=B.alas_azules;
+let form=+(localStorage.getItem("gk_form")||1);
+const ALAS_PROTO={bloquear_balas_desde_forma:5}; // simula Arsenal «Alas azules» nivel 5 en la forma 5
+function wingCfg(){return AL&&AL.formas[form]||null;}
+function wingSegs(){const w=wingCfg();if(!w)return[];const p=S.p,px=-Math.sin(p.a),py=Math.cos(p.a),r0=J.radius*.55,bx=p.x-Math.cos(p.a)*.6,by=p.y-Math.sin(p.a)*.6;
+ return[-1,1].map(sg=>({x1:bx+px*r0*sg,y1:by+py*r0*sg,x2:bx+px*(r0+w.largo_u)*sg-Math.cos(p.a)*1.2,y2:by+py*(r0+w.largo_u)*sg-Math.sin(p.a)*1.2,hw:w.ancho_u/2}));}
+function segDist(q,s_){const dx=s_.x2-s_.x1,dy=s_.y2-s_.y1,l=dx*dx+dy*dy,t_=Math.max(0,Math.min(1,((q.x-s_.x1)*dx+(q.y-s_.y1)*dy)/l));return Math.hypot(q.x-(s_.x1+dx*t_),q.y-(s_.y1+dy*t_));}
+function wingsTick(dt){const w=wingCfg();if(!w)return;const segs=wingSegs();
+ for(const e of S.en){if(e.dead)continue;e.wingCd=Math.max(0,(e.wingCd||0)-dt);if(e.wingCd>0)continue;const r=e.r||e.d.radius;
+  if(segs.some(sg=>segDist(e,sg)<r+sg.hw)){e.wingCd=AL.enfriamiento_por_enemigo_s;enemyHit(e,w.dano_choque*(e==S.boss?.5:1));S.log.wingHits=(S.log.wingHits||0)+1;burst(e.x,e.y,"#5ab8ff",12);}}
+ if(form>=ALAS_PROTO.bloquear_balas_desde_forma)for(const b of S.eb){if(b.life>0&&segs.some(sg=>segDist(b,sg)<sg.hw+b.r)){b.life=0;burst(b.x,b.y,"#9fd8ff",5);S.log.wingBlocks=(S.log.wingBlocks||0)+1;}}}
 function newRun(){const p={x:0,y:0,a:-Math.PI/2,v:0,hp:J.maxHealth,maxHp:J.maxHealth,mag:MAG.balas,shotT:0,reload:0,shieldT:0,shieldCd:0,inv:0,veilT:0,veilCd:0,ambush:0,ramT:0,ramCd:0,ramDir:0,hitIds:new Set(),tgt:null,tgtT:0,contactT:0};
 S={mode:"title",time:0,p,en:[],bul:[],eb:[],orbs:[],fx:[],zones:[],txt:[],wave:0,waveT:0,groups:0,groupT:0,boss:null,souls:0,soulsTot:0,coins:0,lvl:1,kills:0,score:0,cards:{},revived:false,firstVoyage:!localStorage.getItem("gk_played"),dmgTaken:0,waveDamage:0,banner:null,offer:null,rerolls:C.rerolls_gratis_por_partida,cam:{x:0,y:0},shake:0,forceVeil:true,result:null,log:{shots:0,hits:0,spawned:0,bossSeen:false,dmg:0,veil:0}};}
 // ---------- stats from cards
@@ -11264,7 +11333,7 @@ function spawn(type,pos){const e=Object.assign({},E.comun,E[type]);const rv=S.wa
 // prototype pacing: waves 1-4 from plan table; each wave sends its group 3 times (12 s apart) so a run lasts ~3-5 min; wave 5 = Leviatán.
 const GROUPS_PER_WAVE=4;
 // ===== DIFICULTAD DEL PROTOTIPO (v2 "un poco más difícil", JuAn 19-10-2026). NO está en balance.json; pasar al plan si JuAn lo aprueba =====
-const DIFF={version:"proto-v3-tacticas",enemigos_por_grupo_x:1.35,pausa_grupos_x:0.75,vida_enemigos_x:1.2,dano_enemigos_x:1.2,cadencia_enemigos_x:0.85,lancha_velocidad_x:1.2,brulote_velocidad_x:1.15,brulote_mecha_x:0.8,jefe_vida_x:1.35,jefe_dano_x:1.15,jefe_ataques_cada_x:0.8,jefe_velocidad_x:1.15,escudo_automatico:false,
+const DIFF={version:"proto-v4-alas",enemigos_por_grupo_x:1.35,pausa_grupos_x:0.75,vida_enemigos_x:1.2,dano_enemigos_x:1.2,cadencia_enemigos_x:0.85,lancha_velocidad_x:1.2,brulote_velocidad_x:1.15,brulote_mecha_x:0.8,jefe_vida_x:1.35,jefe_dano_x:1.15,jefe_ataques_cada_x:0.8,jefe_velocidad_x:1.15,escudo_automatico:false,
  jefe_v3:{vida_extra_x:1.3,furia_desde:.25,furia:{andanada:{proyectiles:9,abanico_grados:60,cada_s:1.5},brasas:{circulos:12,aviso_s:.75,cada_s:4.5},carga:{cada_s:7,aviso_s:.9,velocidad:42,dura_s:.7,dano:70},invocar:{brulote:2,corsario:2,cada_s:9}},
   blindaje:{cada_s:13,dura_s:2,reduccion:.6},enfado:{tras_s:100,cadencia_x:.7}},
  // rampa por oleada (multiplica sobre lo anterior, oleada 1 = ×1): N = número de oleada
@@ -11362,6 +11431,7 @@ function update(dt){if(S.mode=="watch"){S.watchT-=dt;if(S.watchT<=0)revive();ret
  tacticsTick(dt);
  for(const e of S.en){if(e.dead)continue;e.hitFlash-=dt;if(e==S.boss){bossAI(e,dt);continue;}aiEnemy(e,dt);
   if(D(e,p)<e.d.radius+J.radius&&e.type!="brulote"){p.contactT-=dt;if(p.contactT<=0){p.contactT=.5;playerHit(E.comun.contactDamageToPlayer*DIFF.dano_enemigos_x*(e.type=="bastion"?2:1));}const a=ang(e,p);p.x+=Math.cos(a)*6*dt;p.y+=Math.sin(a)*6*dt;}}
+ wingsTick(dt);
  // separation
  for(let i=0;i<S.en.length;i++)for(let j=i+1;j<S.en.length;j++){const a=S.en[i],b=S.en[j],r=(a.r||a.d.radius)+(b.r||b.d.radius),d=D(a,b);if(d<r&&d>0){const k=(r-d)/2/d;if(a!=S.boss){a.x-=(b.x-a.x)*k;a.y-=(b.y-a.y)*k;}if(b!=S.boss){b.x+=(b.x-a.x)*k;b.y+=(b.y-a.y)*k;}}}
  S.en=S.en.filter(e=>!e.dead);
@@ -11423,15 +11493,25 @@ function drawSea(){const gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,"#
  g.strokeStyle="rgba(120,200,255,0.10)";g.lineWidth=2;const sp=6;const x0=Math.floor((S.cam.x-56)/sp)*sp,y0=Math.floor((S.cam.y-28)/sp)*sp;
  for(let y=y0;y<S.cam.y+28;y+=sp)for(let x=x0;x<S.cam.x+56;x+=sp){const h=Math.sin(x*12.9898+y*78.233)*43758.5;const r=h-Math.floor(h);if(r<.35){const ox=Math.sin(wavesT*.8+r*20)*1.2;g.beginPath();g.arc(wx(x+r*5+ox),wy(y+r*3),10+r*14,Math.PI*1.15,Math.PI*1.85);g.stroke();}}}
 function shipPath(L,Wd){g.beginPath();g.moveTo(L*.55,0);g.lineTo(L*.15,-Wd*.42);g.lineTo(-L*.42,-Wd*.5);g.lineTo(-L*.5,-Wd*.2);g.lineTo(-L*.5,Wd*.2);g.lineTo(-L*.42,Wd*.5);g.lineTo(L*.15,Wd*.42);g.closePath();}
-function drawPlayer(){const p=S.p,x=wx(p.x),y=wy(p.y),L=J.length*PX*1.35,Wd=J.radius*PX*1.3;g.save();g.translate(x,y);
+function drawPlayer(){const p=S.p,x=wx(p.x),y=wy(p.y),FS=1+.05*(form-1),L=J.length*PX*1.35*FS,Wd=FS*J.radius*PX*1.3;g.save();g.translate(x,y);
  if(p.veilT>0){g.globalAlpha=.45;for(let i=0;i<8;i++){g.fillStyle="rgba(200,216,240,.25)";g.beginPath();g.arc(-Math.cos(p.a)*(i*8)+rnd(-6,6),-Math.sin(p.a)*(i*8)+rnd(-6,6),18-i,0,7);g.fill();}g.globalAlpha=1;g.strokeStyle="rgba(230,240,255,.8)";g.lineWidth=2;g.beginPath();g.arc(0,0,L*.75,-Math.PI/2,-Math.PI/2+2*Math.PI*(p.veilT/(S.boss?lvData("velo_de_bruma").duracion_con_jefe_s:lvData("velo_de_bruma").duracion_s)));g.stroke();}
  // wake
  g.save();g.rotate(p.a);g.fillStyle="rgba(200,240,255,"+(.08+p.v/J.maxForwardSpeed*.2)+")";g.beginPath();g.moveTo(-L*.5,-Wd*.4);g.lineTo(-L*.5-p.v*2.5,-Wd*1.1);g.lineTo(-L*.5-p.v*2.5,Wd*1.1);g.lineTo(-L*.5,Wd*.4);g.fill();
  if(p.inv>0&&Math.floor(S.time*10)%2)g.globalAlpha=.4;if(p.veilT>0)g.globalAlpha=.45;
+ // alas azules (formas 4-5): solo defensa
+ const wc=wingCfg();if(wc){g.save();g.shadowColor="#2a8bff";g.shadowBlur=22;const r0=J.radius*.55*PX,lw=wc.largo_u*PX,aw=wc.ancho_u*PX,pul=.75+.15*Math.sin(S.time*5);
+  for(const sg of[-1,1]){const gr=g.createLinearGradient(0,sg*r0,0,sg*(r0+lw));gr.addColorStop(0,"rgba(120,200,255,"+pul+")");gr.addColorStop(1,"rgba(40,110,255,.25)");g.fillStyle=gr;
+   g.beginPath();g.moveTo(-9+aw*.5,sg*r0);g.lineTo(-9-18+aw*.3,sg*(r0+lw));g.lineTo(-9-18-aw*.6,sg*(r0+lw*.92));g.lineTo(-9-aw*.6,sg*r0);g.closePath();g.fill();g.strokeStyle="#cfe8ff";g.lineWidth=2;g.stroke();
+   g.strokeStyle="rgba(200,235,255,.6)";g.lineWidth=1;for(let k=1;k<4;k++){g.beginPath();g.moveTo(-9,sg*r0);g.lineTo(-9-18*k/4-aw*.1,sg*(r0+lw*k/4));g.stroke();}}g.restore();}
  // fins cyan
  g.fillStyle="#39e0ff";g.shadowColor="#39e0ff";g.shadowBlur=14;for(const sgn of[-1,1]){g.beginPath();g.moveTo(-L*.1,sgn*Wd*.45);g.lineTo(-L*.45,sgn*Wd*.95);g.lineTo(-L*.35,sgn*Wd*.45);g.fill();}g.shadowBlur=0;
  const hg=g.createLinearGradient(0,-Wd/2,0,Wd/2);hg.addColorStop(0,"#9fb2c4");hg.addColorStop(.5,"#e6eef6");hg.addColorStop(1,"#6d8296");g.fillStyle=hg;shipPath(L,Wd);g.fill();g.strokeStyle=p.veilT>0?"#E6F0FF":"#22323f";g.lineWidth=2;g.stroke();
- g.fillStyle="#2a3d50";g.fillRect(-L*.3,-Wd*.18,L*.4,Wd*.36);g.fillStyle="#39e0ff";g.fillRect(-L*.5,-Wd*.15,5,Wd*.3);g.restore();
+ g.fillStyle="#2a3d50";g.fillRect(-L*.3,-Wd*.18,L*.4,Wd*.36);g.fillStyle="#39e0ff";g.fillRect(-L*.5,-Wd*.15,5,Wd*.3);
+ if(form>=2){g.fillStyle="#7a8a99";for(const sg of[-1,1])g.fillRect(-L*.25,sg*Wd*.3-3,L*.35,6);}
+ if(form>=3){g.fillStyle="#39e0ff";g.shadowColor="#39e0ff";g.shadowBlur=12;g.fillRect(-L*.56,-Wd*.3,7,Wd*.18);g.fillRect(-L*.56,Wd*.12,7,Wd*.18);g.shadowBlur=0;g.strokeStyle="#cde";g.lineWidth=2;g.beginPath();g.moveTo(L*.05,0);g.lineTo(-L*.15,0);g.stroke();}
+ if(form>=4){g.fillStyle="rgba(120,220,255,.35)";for(const sg of[-1,1]){g.beginPath();g.moveTo(L*.05,sg*Wd*.2);g.lineTo(-L*.3,sg*Wd*.55);g.lineTo(-L*.35,sg*Wd*.2);g.fill();}}
+ if(form>=5){g.fillStyle="#c9d6e2";g.beginPath();g.arc(L*.2,0,5,0,7);g.arc(-L*.38,0,5,0,7);g.fill();}
+ g.restore();
  // turret
  {const s2=st(),nb=s2.barrels,stp=s2.steps;if(p.nb!==undefined&&p.nb!=nb){p.barrelFlash=1;floatT(p.x,p.y-6,t("cannon.upgrade_barrels","¡CAÑÓN NUEVO! {count} cañones").replace("{count}",nb),"#ffd84a",1.2);}
  if(p.stp!==undefined&&stp>p.stp){p.barrelFlash=1;floatT(p.x,p.y-6,t("cannon.upgraded","CAÑÓN MEJORADO +{count}").replace("{count}",stp),"#ffb020",1.4);}p.nb=nb;p.stp=stp;
@@ -11455,7 +11535,7 @@ function txt(s,x,y,sz,c,al,b){g.font=(b?"bold ":"")+sz+"px system-ui,Segoe UI,Ar
 function render(){g.setTransform(cv.width/W,0,0,cv.height/H,0,0);const sh=S.shake>0?rnd(-4,4):0;g.save();g.translate(sh,sh);drawSea();
  for(const z of S.zones){g.beginPath();g.arc(wx(z.x),wy(z.y),z.r*PX,0,7);if(z.warn>0){g.fillStyle="rgba(255,40,30,"+(.15+.25*(1-z.warn/z.max))+")";g.fill();g.strokeStyle="#ff3020";g.lineWidth=2;g.stroke();}else if(z.fire){g.fillStyle="rgba(255,110,20,"+(.35*z.t/z.max)+")";g.fill();}else{g.fillStyle="rgba(255,150,40,"+(z.t/z.max*.6)+")";g.fill();}}
  for(const o of S.orbs){g.fillStyle=o.k=="coin"?"#ffcc33":o.c;g.shadowColor=g.fillStyle;g.shadowBlur=10;g.beginPath();g.arc(wx(o.x),wy(o.y),o.k=="coin"?6:7,0,7);g.fill();}g.shadowBlur=0;
- for(const e of S.en)drawEnemy(e);if(S.mode!="dead"&&S.mode!="watch"||true)drawPlayer();
+ for(const e of S.en)drawEnemy(e);if(S.mode!="title")drawPlayer();
  for(const b of S.bul){g.fillStyle=b.amb?"#E6F0FF":b.crit?"#ffb020":"#ffe9a0";g.beginPath();g.arc(wx(b.x),wy(b.y),b.amb?7:(b.r||5),0,7);g.fill();if((b.r||5)>6){g.globalAlpha=.3;g.beginPath();g.arc(wx(b.x),wy(b.y),b.r*1.8,0,7);g.fill();g.globalAlpha=1;}}
  for(const b of S.eb){g.fillStyle="#ff4040";g.shadowColor="#ff2020";g.shadowBlur=8;g.beginPath();g.arc(wx(b.x),wy(b.y),7,0,7);g.fill();}g.shadowBlur=0;
  for(const f of S.fx){g.globalAlpha=f.t/f.max;g.fillStyle=f.c;if(f.big){g.beginPath();g.arc(wx(f.x),wy(f.y),9,0,7);g.fill();}else g.fillRect(wx(f.x)-3,wy(f.y)-3,6,6);}g.globalAlpha=1;
@@ -11504,19 +11584,22 @@ function drawResults(){g.fillStyle="rgba(0,10,25,.85)";g.fillRect(0,0,W,H);const
  rows.forEach((q,i)=>{txt(q[0],W/2-40,215+i*44,26,"#cde","right");txt(String(q[1]),W/2+40,215+i*44,28,"#fff","left",1);});
  const cs=Object.entries(S.cards).map(([k,v])=>t("card."+k+".name",k)+" "+"I II III IV V".split(" ")[v-1]).join(" · ");wrap(cs,W/2,540,1100,18,"#9fc");
  revRects={again:{x:W/2-200,y:600,w:400,h:70}};btnR(revRects.again,u("again"),"#1d6aa0");}
-function drawTitle(){g.fillStyle="rgba(0,10,20,.55)";g.fillRect(0,0,W,H);txt("GRIMKEEL",W/2,220,110,"#d8e8f8","center",1);txt("OCEAN SURGE",W/2,310,46,"#39e0ff","center",1);txt(u("sub")+" · "+DIFF.version,W/2,380,24,"#bcd","center");
- txt(u("tap"),W/2,480,40,Math.floor(Date.now()/500)%2?"#ffd84a":"#fff","center",1);txt(u("ctrl"),W/2,560,22,"#cde","center");txt(u("kb"),W/2,600,18,"#9ab","center");
+const FBTN=FORMS.map((f,i)=>({x:W/2-2.5*210+i*210+5,y:625,w:200,h:62,f:i+1}));
+function drawTitle(){g.fillStyle="rgba(0,10,20,.55)";g.fillRect(0,0,W,H);{const c={...S.cam},pa=S.p.a;S.cam.x=S.p.x-(W*.84-W/2)/PX;S.cam.y=S.p.y-(300-H/2)/PX;S.p.a=-Math.PI/2;g.save();g.translate(W*.84,300);g.scale(1.8,1.8);g.translate(-W*.84,-300);drawPlayer();g.restore();S.cam=c;S.p.a=pa;txt(t("ship.form."+FORMS[form-1]),W*.84,430,24,"#fff","center",1);}txt("GRIMKEEL",W/2,220,110,"#d8e8f8","center",1);txt("OCEAN SURGE",W/2,310,46,"#39e0ff","center",1);txt(u("sub")+" · "+DIFF.version,W/2,380,24,"#bcd","center");
+ txt(t("ship.form.label","Forma {n}").replace("{n}","")+(lang=="es"?"del barco:":"of the ship:"),W/2,610-28,18,"#9cf","center");for(const b of FBTN){const on=b.f==form;g.fillStyle=on?"#1d6aa0":"rgba(0,0,0,.45)";g.fillRect(b.x,b.y,b.w,b.h);g.strokeStyle=on?"#7fd8ff":"#fff3";g.lineWidth=on?3:1;g.strokeRect(b.x,b.y,b.w,b.h);txt(t("ship.form.label","Forma {n}").replace("{n}",b.f)+" · "+[0,10,20,30,40][b.f-1],b.x+b.w/2,b.y+18,15,"#cde","center");txt(t("ship.form."+FORMS[b.f-1],FORMS[b.f-1])+(b.f>=4?" 🪽":""),b.x+b.w/2,b.y+43,19,on?"#fff":"#bcd","center",1);}
+ if(form>=4)txt("🔷 "+t("wings.name","Alas azules")+": "+t("wings.desc",""),W/2,700,16,"#8fd0ff","center");
+ txt(u("tap"),W/2,480,40,Math.floor(Date.now()/500)%2?"#ffd84a":"#fff","center",1);txt(u("ctrl"),W/2,520,22,"#cde","center");txt(u("kb"),W/2,550,18,"#9ab","center");
  g.fillStyle="rgba(0,0,0,.35)";g.beginPath();g.arc(BTN.lang.x,BTN.lang.y,BTN.lang.r,0,7);g.fill();txt(lang.toUpperCase(),BTN.lang.x,BTN.lang.y,18,"#fff","center",1);const sbx=BTN.sens;g.fillStyle="rgba(0,0,0,.35)";g.fillRect(sbx.x-55,sbx.y-22,110,44);txt((lang=="es"?"Sens: ":"Sens: ")+SENS_LBL[lang][sens],sbx.x,sbx.y,16,"#fff","center",1);}
 const inR=(q,r)=>r&&q.x>=r.x&&q.x<=r.x+r.w&&q.y>=r.y&&q.y<=r.y+r.h;
 function handleTaps(){while(taps.length){const q=taps.shift();
- if(S.mode=="title"){if(D(q,BTN.lang)<BTN.lang.r){toggleLang();continue;}if(Math.abs(q.x-BTN.sens.x)<60&&Math.abs(q.y-BTN.sens.y)<30){cycleSens();continue;}S.mode="play";startWave(1);}
+ if(S.mode=="title"){if(D(q,BTN.lang)<BTN.lang.r){toggleLang();continue;}const fb=FBTN.find(b=>inR(q,b));if(fb){form=fb.f;localStorage.setItem("gk_form",form);continue;}if(Math.abs(q.x-BTN.sens.x)<60&&Math.abs(q.y-BTN.sens.y)<30){cycleSens();continue;}S.mode="play";startWave(1);}
  else if(S.mode=="cards"){cardRects.forEach((r,i)=>{if(inR(q,r))pickCard(i);});if(inR(q,cardRects.reroll)&&S.rerolls>0){S.rerolls--;S.offer=makeOffer();}}
  else if(S.mode=="dead"){if(inR(q,revRects.free))revive();else if(inR(q,revRects.vid)){S.mode="watch";S.watchT=3;}else if(inR(q,revRects.dia))revive();else if(inR(q,revRects.give))endRun(false);}
  else if(S.mode=="results"){if(inR(q,revRects.again)){newRun();timers=[];S.mode="play";startWave(1);}}}}
 let last=performance.now();
 function loop(now){const dt=Math.min(.05,(now-last)/1000);last=now;wavesT+=dt;handleTaps();update(dt);render();requestAnimationFrame(loop);}
 // ---------- test hooks (?test=...)
-window.GK={get S(){return S},stats:()=>st(),step(sec,ap){auto=ap||auto;const n=Math.round(sec*60);for(let i=0;i<n;i++){wavesT+=1/60;handleTaps();update(1/60);}},newRun,startWave,pickCard,playerHit,levelUp,setAuto(f){auto=f},render};
+window.GK={get S(){return S},setForm(f){form=f},spawn,stats:()=>st(),step(sec,ap){auto=ap||auto;const n=Math.round(sec*60);for(let i=0;i<n;i++){wavesT+=1/60;handleTaps();update(1/60);}},newRun,startWave,pickCard,playerHit,levelUp,setAuto(f){auto=f},render};
 newRun();resize();
 const TEST=new URLSearchParams(location.search).get("test");
 if(TEST){window.__test=1;Math.random=(()=>{let s=12345;return()=>((s=Math.imul(s^s>>>15,1|s)+0x6D2B79F5|0),((s^s>>>7)>>>0)/4294967296);})();window.__runTest&&0;}
@@ -11524,7 +11607,7 @@ requestAnimationFrame(loop);
 </script><script>(function(){const T=new URLSearchParams(location.search).get("test");if(!T)return;const errs=[];addEventListener("error",e=>errs.push(String(e.message)));
 const ap=()=>{const S=GK.S,p=S.p;let best=null,bd=1e9;for(const e of S.en){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<bd){bd=d;best=e;}}if(!best)return{x:Math.cos(S.time*.3),y:Math.sin(S.time*.3),m:.5};const a=Math.atan2(best.y-p.y,best.x-p.x);const tg=a+(bd<18?2.2:1.5);return{x:Math.cos(tg),y:Math.sin(tg),m:1};};
 function out(o){const pre=document.createElement("pre");pre.id="out";pre.textContent=JSON.stringify(o);document.body.appendChild(pre);document.title="DONE "+JSON.stringify(o);}
-setTimeout(()=>{try{const S=()=>GK.S;GK.S.mode="play";GK.startWave(1);GK.setAuto(ap);
+setTimeout(()=>{try{const S=()=>GK.S;if(T!="selector"){GK.S.mode="play";GK.startWave(1);}GK.setAuto(ap);
  if(T=="sim"){const x0=S().p.x,y0=S().p.y;let maxd=0,t=0,revives=0,cards=0,firstSpawn=null,bossAt=null;
   while(t<420){GK.step(0.5);t+=.5;const s=S();maxd=Math.max(maxd,Math.hypot(s.p.x-x0,s.p.y-y0));if(firstSpawn==null&&s.log.spawned)firstSpawn=t;if(bossAt==null&&s.log.bossSeen)bossAt=t;
    if(s.mode=="cards"){GK.pickCard(0);cards++;}if(s.mode=="dead"){if(!s.revived){revives++;s.mode="play";s.revived=true;s.p.hp=s.p.maxHp*.5;s.p.inv=3;}else{break;}}if(s.mode=="results")break;}
@@ -11534,6 +11617,11 @@ setTimeout(()=>{try{const S=()=>GK.S;GK.S.mode="play";GK.startWave(1);GK.setAuto
  if(T=="dmgcards"){GK.step(3);GK.S.cards={polvora_fina:1};GK.S.offer=["polvora_negra","bala_de_alma","polvora_fina"].map(id=>window.__CARDS.find(c=>c.id==id));GK.S.mode="cards";}
  if(T=="dmgapply"){GK.step(1);const S=GK.S,before=GK.stats().dmgShown;S.cards={polvora_negra:1};const a1=GK.stats().dmgShown;S.cards={polvora_negra:1,bala_de_alma:1};const a2=GK.stats().dmgShown;S.dbgBullets=6;const a3=GK.stats();out({errs,before,negra:a1,negraAlma:a2,six:{barrels:a3.barrels,steps:a3.steps,size:a3.size,dmgShown:a3.dmgShown}});return;}
  if(T=="fury"){GK.S.lvl=8;GK.S.p.maxHp=1800;GK.S.p.hp=1800;GK.S.en=[];GK.S.clearT=0;GK.startWave(5);GK.step(3.4);const b=GK.S.boss,p=GK.S.p;p.inv=99;b.x=p.x+20;b.y=p.y-4;b.hp=b.max*.2;b.chgCd=0;p.reload=99;GK.setAuto(()=>({x:-1,y:.1,m:.4}));GK.step(.5);p.inv=0;p.reload=0;window.__fd={cA:b.chargeA,toP:Math.atan2(p.y-b.y,p.x-b.x),a:b.a,warn:b.chargeWarn,ct:b.chargeT};}
+ if(T=="wings"){const res={};for(const f of[1,2,3,4,5]){GK.setForm(f);GK.newRun();GK.S.mode="play";GK.setAuto(()=>null);const p=GK.S.p;p.a=0;p.inv=99;p.reload=999;p.mag=0;const e=GK.spawn("corsario",{x:p.x-.6,y:p.y+3.2});const hp0=e.hp;GK.step(1.1);res[f]={hpLost:Math.round(hp0-e.hp),wingHits:GK.S.log.wingHits||0};}
+  GK.setForm(5);GK.newRun();GK.S.mode="play";GK.setAuto(()=>null);const p=GK.S.p;p.a=0;p.reload=999;p.mag=0;GK.S.eb.push({x:p.x-1,y:p.y+5,vx:0,vy:-20,dmg:25,life:2,r:.6});GK.step(.5);res.block5=GK.S.log.wingBlocks||0;
+  out({errs,res});return;}
+ if(T=="alas"){GK.setForm(5);GK.newRun();GK.S.mode="play";GK.startWave(2);GK.step(9);const p=GK.S.p;p.inv=0;for(let i=0;i<2;i++){const e=GK.spawn("corsario",{x:p.x-.5+i,y:p.y+(i?-3.4:3.4)});}GK.step(.15);}
+ if(T=="selector"){GK.setForm(4);GK.S.mode="title";GK.setAuto(null);GK.render();out({errs});return;}
  if(T=="gameplay"){GK.step(22);GK.S.mode="play";}
  if(T=="cards"){let n=0;while(GK.S.mode!="cards"&&n++<400)GK.step(.25);}
  if(T=="boss"){GK.S.lvl=5;GK.S.cards={canon_doble:2,polvora_fina:2,velo_de_bruma:1};GK.S.p.maxHp=1400;GK.S.p.hp=1400;GK.S.en=[];GK.S.clearT=0;GK.startWave(5);GK.step(3.4);GK.S.p.inv=99;const b=GK.S.boss,p=GK.S.p;b.x=p.x+22;b.y=p.y-6;b.hp=b.max*.45;p.reload=999;p.mag=0;GK.setAuto(()=>({x:-1,y:.2,m:.6}));GK.step(6.2);p.inv=0;p.reload=0;p.mag=5;}
