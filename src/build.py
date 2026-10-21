@@ -1,6 +1,6 @@
 import json,os
 R='/workspace/soulbound/'
-bal=open(R+'plan/balance.json').read();es=open(R+'plan/content/strings/es.json').read();en=open(R+'plan/content/strings/en.json').read()
+D=R+'prototipo/data/';bal=open(D+'balance.json').read();es=open(D+'es.json').read();en=open(D+'en.json').read()
 import base64,glob
 art={os.path.basename(f).rsplit('.',1)[0]:('data:image/'+('jpeg' if f.endswith('jpg') else 'png')+';base64,'+base64.b64encode(open(f,'rb').read()).decode()) for f in sorted(glob.glob(R+'prototipo/assets/*.[pj][np]g'))}
 js=open(R+'prototipo/src/game.js').read();tj=open(R+'prototipo/src/test.js').read()
