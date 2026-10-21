@@ -7,7 +7,7 @@ js=open(R+'src/game.js').read();tj=open(R+'src/test.js').read()
 html=f'''<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><title>GRIMKEEL: Ocean Surge · Prototipo</title>
 <style>html,body{{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}}canvas{{position:absolute;touch-action:none}}#rot{{position:fixed;inset:0;background:#031a2a;color:#fff;font:bold 26px system-ui;display:none;align-items:center;justify-content:center;text-align:center;z-index:9;padding:30px}}</style></head>
-<body><canvas id="c"></canvas><div id="rot">⟳</div>
+<body><canvas id="c"></canvas><a id="p5" href="primeros5/" style="position:fixed;right:14px;bottom:14px;display:none;z-index:5;background:#e6b94a;color:#1b1206;font:700 16px system-ui;padding:10px 14px;border-radius:10px;text-decoration:none">▶ Primeros 5 minutos</a><div id="rot">⟳</div>
 <script>window.BALANCE={bal};window.STR_ES={es};window.STR_EN={en};window.ART={json.dumps(art)};</script>
 <script>{js}</script><script>{tj}</script></body></html>'''
 for p in [R+'index.html',R+'grimkeel_prototipo.html']: open(p,'w').write(html)
